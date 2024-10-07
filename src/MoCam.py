@@ -16,7 +16,7 @@ SPDX-License-Identifier: MIT License
 
 '''
 from gpiozero import Button, MotionSensor
-from picamera2 import Picamera2
+from picamera2 import Picamera2, Preview
 from picamera2.encoders import H264Encoder
 from picamera2.outputs import FfmpegOutput
 from datetime import datetime
@@ -26,19 +26,16 @@ import sys
 _exit = False
 _filming = False
 
+
 btn_still = Button(21)
 btn_video = Button(20)
 sns_motion = MotionSensor(16)
-scam = Picamera2()
-vcam = Picamera2()
+cam = Picamera2()
+vid_encoder = H264Encoder(bitrate=10000000)
 
-config = scam.create_still_configuration()
-scam.configure(config)
-vid_config = vcam.create_video_configuration()
-vcam.configure(vid_config)
-encoder = H264Encoder(10000000)
-
-scam.start()
+config = cam.create_video_configuration(main={"size": (2048, 1536)}, lores={"size": (640,480)}, encode="lores")
+cam.configure(config)
+cam.start_preview(Preview.NULL)
 
 def create_timestamp():
     dt = datetime.fromtimestamp(time.time())
@@ -55,9 +52,7 @@ def start_video():
         vid_name = "mcv-{}.mp4".format(create_timestamp())
         output_path = "~/Videos/{}".format(vid_name)
         output = FfmpegOutput(output_path)
-        vcam.start_recording(encoder, output)
-        time.sleep(5)
-        vcam.stop_recording()
+        cam.start_recording(vid_encoder, output)
     return
 
 def stop_video():
@@ -65,12 +60,17 @@ def stop_video():
     if _filming:
         _filming = False
         print("Cut!")
+        cam.stop_recording()
     return
 
 def take_still():
+    global _filming
+    if _filming:
+        print("Currently filming, sorry.")
+        return
     print("Click")
     pic_name = "mcp-{}.jpg".format(create_timestamp())
-    scam.capture_file("~/Pictures/{}".format(pic_name))
+    cam.capture_file("~/Pictures/{}".format(pic_name))
     return
 
 def on_hold_still():
@@ -93,7 +93,7 @@ def on_motion():
 def on_motion_end():
     global _filming
     if _filming:
-        time.sleep(1.0)
+        time.sleep(3.0)
         stop_video()
     return
 
@@ -115,8 +115,8 @@ while True:
             break
         time.sleep(0.1)
     except KeyboardInterrupt:
-        print("Okay, I'll quit now.")
+        print("\nOkay, I'll quit now.")
         break
 
-scam.stop()
+cam.stop()
 sys.exit(0)

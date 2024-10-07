@@ -2,7 +2,7 @@
 
 Raspberry Pi Camera and Motion Detector w/Still&amp;Movie Buttons
 
-This uses a Raspberry Pi (a Zero W is fine) and a Pi Camera Module, plus a
+This uses a Raspberry Pi (targeted to a Zero W) and a Pi Camera Module, plus a
 motion detector and two momentary switches, to create a motion activated
 monitoring camera.
 
