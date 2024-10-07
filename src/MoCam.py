@@ -17,7 +17,7 @@ SPDX-License-Identifier: MIT License
 from gpiozero import Button, MotionSensor
 from picamera2 import Picamera2
 from datetime import datetime
-from time import sleep, time
+import time
 import sys
 
 _exit = False
@@ -77,7 +77,7 @@ def on_motion():
 def on_motion_end():
     global _filming
     if _filming:
-        sleep(1.0)
+        time.sleep(1.0)
         stop_video()
     return
 
@@ -91,10 +91,11 @@ btn_still.hold_time = 3.0
 btn_still.when_held = on_hold_still
 
 # Main
+print("Smile :-)")
 while True:
     if _exit:
         break
-    sleep(0.1)
+    time.sleep(0.1)
 
 print("Shutter-Release Held - Time to exit.")
 sys.exit(0)
