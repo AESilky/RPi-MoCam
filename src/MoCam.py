@@ -1,3 +1,4 @@
+#!//usr/bin/python3
 '''
 PiCamera controlled by a motion detector module and a pair of switches to
 record video clips and still images.
@@ -16,6 +17,8 @@ SPDX-License-Identifier: MIT License
 '''
 from gpiozero import Button, MotionSensor
 from picamera2 import Picamera2
+from picamera2.encoders import H264Encoder
+from picamera2.outputs import FfmpegOutput
 from datetime import datetime
 import time
 import sys
@@ -26,7 +29,16 @@ _filming = False
 btn_still = Button(21)
 btn_video = Button(20)
 sns_motion = MotionSensor(16)
-cam = Picamera2()
+scam = Picamera2()
+vcam = Picamera2()
+
+config = scam.create_still_configuration()
+scam.configure(config)
+vid_config = vcam.create_video_configuration()
+vcam.configure(vid_config)
+encoder = H264Encoder(10000000)
+
+scam.start()
 
 def create_timestamp():
     dt = datetime.fromtimestamp(time.time())
@@ -41,7 +53,11 @@ def start_video():
         _filming = True
         print("Action...")
         vid_name = "mcv-{}.mp4".format(create_timestamp())
-        cam.start_and_record_video("~/Videos/{}".format(vid_name), duration=5)
+        output_path = "~/Videos/{}".format(vid_name)
+        output = FfmpegOutput(output_path)
+        vcam.start_recording(encoder, output)
+        time.sleep(5)
+        vcam.stop_recording()
     return
 
 def stop_video():
@@ -54,7 +70,7 @@ def stop_video():
 def take_still():
     print("Click")
     pic_name = "mcp-{}.jpg".format(create_timestamp())
-    cam.start_and_capture_file("~/Pictures/{}".format(pic_name))
+    scam.capture_file("~/Pictures/{}".format(pic_name))
     return
 
 def on_hold_still():
@@ -93,9 +109,14 @@ btn_still.when_held = on_hold_still
 # Main
 print("Smile :-)")
 while True:
-    if _exit:
+    try:
+        if _exit:
+            print("Shutter-Release Held - Time to exit.")
+            break
+        time.sleep(0.1)
+    except KeyboardInterrupt:
+        print("Okay, I'll quit now.")
         break
-    time.sleep(0.1)
 
-print("Shutter-Release Held - Time to exit.")
+scam.stop()
 sys.exit(0)
