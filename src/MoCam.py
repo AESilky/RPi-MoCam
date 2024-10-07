@@ -15,7 +15,7 @@ SPDX-License-Identifier: MIT License
 
 '''
 from gpiozero import Button, MotionSensor
-from picamzero import Camera
+from picamera2 import Picamera2
 from datetime import datetime
 from time import sleep, time
 import sys
@@ -26,7 +26,7 @@ _filming = False
 btn_still = Button(21)
 btn_video = Button(20)
 sns_motion = MotionSensor(16)
-cam = Camera()
+cam = Picamera2()
 
 def create_timestamp():
     dt = datetime.fromtimestamp(time.time())
@@ -40,10 +40,8 @@ def start_video():
     if not _filming:
         _filming = True
         print("Action...")
-        cam.start_preview()
         vid_name = "mcv-{}.mp4".format(create_timestamp())
-        cam.record_video("~/Videos/{}".format(vid_name), duration=5)
-        cam.stop_preview()
+        cam.start_and_record_video("~/Videos/{}".format(vid_name), duration=5)
     return
 
 def stop_video():
@@ -55,10 +53,8 @@ def stop_video():
 
 def take_still():
     print("Click")
-    cam.start_preview()
     pic_name = "mcp-{}.jpg".format(create_timestamp())
-    cam.take_photo("~/Pictures/{}".format(pic_name))
-    cam.stop_preview()
+    cam.start_and_capture_file("~/Pictures/{}".format(pic_name))
     return
 
 def on_hold_still():
